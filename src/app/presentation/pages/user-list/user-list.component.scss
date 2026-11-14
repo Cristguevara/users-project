@@ -1,0 +1,23 @@
+:host {
+  display: block;
+}
+
+.list-toolbar {
+  margin-bottom: 1rem;
+}
+
+.search-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 22rem;
+}
+
+.search-box input {
+  width: 100%;
+}
+
+.actions-cell {
+  flex-wrap: wrap;
+}

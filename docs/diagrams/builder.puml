@@ -1,0 +1,44 @@
+@startuml builder
+title Patrón Builder - Construcción del request body paso a paso
+
+' El Builder: arma el UserRequestBody de forma incremental y encadenable.
+class UserRequestBuilder {
+    - body: UserRequestBody
+    + withPersonalData(data): this
+    + asNewUser(): this
+    + withStatus(status): this
+    + withSearch(term): this
+    + withDependency(id): this
+    + build(): UserRequestBody
+}
+
+' El producto que se construye (distintas variantes con los mismos pasos).
+class UserRequestBody {
+    + firstName?: string
+    + lastName?: string
+    + phone?: string
+    + email?: string
+    + dependencyId?: number
+    + status?: UserStatus
+    + search?: string
+}
+
+' El director/cliente que decide qué pasos usar según la operación.
+class UserHttpRepository {
+    + create(data)   : usa withPersonalData().asNewUser().build()
+    + update(id,data): usa withPersonalData().build()
+    + changeStatus() : usa withStatus().build()
+    + list(filter)   : usa withSearch().build()
+}
+
+UserRequestBuilder ..> UserRequestBody : construye
+UserHttpRepository --> UserRequestBuilder : usa (paso a paso)
+
+note bottom of UserRequestBuilder
+  Cada operación arma un subconjunto de campos
+  con los mismos pasos encadenables.
+  asNewUser() encapsula la regla "nace Activo".
+  Un filtro nuevo = un método nuevo (OCP).
+end note
+
+@enduml

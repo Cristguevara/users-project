@@ -1,0 +1,139 @@
+@startuml user-proyect-patrones
+title Diagrama de clases - user-proyect (patrones de diseño, estilo Clean Architecture)
+
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+left to right direction
+
+' ===========================================================================
+' base/ (primitivas transversales, sin dependencias de framework)
+' ===========================================================================
+package "base" {
+  interface "UseCase<S,T>" as UseCase {
+    +execute(params: S): Observable<T>
+  }
+  abstract class "Mapper<I,O>" as Mapper {
+    #{abstract} mapFrom(param: I): O
+    #mapTo?(param: O): I
+  }
+  interface "SuccessResponse<T>" as SuccessResponse {
+    +code: string
+    +message: string
+    +data: T
+  }
+}
+
+' ===========================================================================
+' domain/ (contratos abstractos, modelos y casos de uso)
+' ===========================================================================
+package "domain" {
+
+  abstract class UserRepository <<Bridge: Abstracción>> {
+    +{abstract} list(filter): Observable<User[]>
+    +{abstract} getById(id): Observable<User?>
+    +{abstract} create(data): Observable<User>
+    +{abstract} update(id, data): Observable<User>
+    +{abstract} changeStatus(id, status): Observable<User>
+  }
+  abstract class DependencyRepository <<Bridge: Abstracción>> {
+    +{abstract} getAll(): Observable<Dependency[]>
+  }
+
+  class ListUsersUseCase <<Command>>
+  class GetUserByIdUseCase <<Command>>
+  class CreateUserUseCase <<Command>>
+  class UpdateUserUseCase <<Command>>
+  class ChangeUserStatusUseCase <<Command>>
+  class GetDependenciesUseCase <<Command>>
+
+  interface User
+  interface UserEntity
+  interface Dependency
+  interface UserFilter
+}
+
+' ===========================================================================
+' patterns/
+' ===========================================================================
+package "patterns" {
+  class UserRequestBuilder <<Builder>> {
+    +withPersonalData(data): this
+    +asNewUser(): this
+    +withStatus(status): this
+    +withSearch(term): this
+    +withDependency(id): this
+    +build(): UserRequestBody
+  }
+}
+
+' ===========================================================================
+' data/ (implementaciones concretas + backend simulado)
+' ===========================================================================
+package "data" {
+  class UserHttpRepository <<Bridge: Implementación>>
+  class DependencyHttpRepository <<Bridge: Implementación>>
+  class UserResponseMapper <<Adapter>>
+  interface UserRequestBody
+  class "user-backend.mock\n(servidor simulado)" as Backend
+  class DATA_PROVIDERS <<Factory>>
+}
+
+' ===========================================================================
+' presentation/
+' ===========================================================================
+package "presentation" {
+  class UserListComponent
+  class UserFormComponent
+  class COLUMN_RENDERERS <<DispatchTable>>
+}
+
+' ===========================================================================
+' RELACIONES
+' ===========================================================================
+
+' Command: cada caso de uso realiza la interfaz UseCase y usa el repo abstracto.
+UseCase <|.. ListUsersUseCase : realización
+UseCase <|.. GetUserByIdUseCase : realización
+UseCase <|.. CreateUserUseCase : realización
+UseCase <|.. UpdateUserUseCase : realización
+UseCase <|.. ChangeUserStatusUseCase : realización
+UseCase <|.. GetDependenciesUseCase : realización
+ListUsersUseCase --> UserRepository : asociación (abstracción)
+CreateUserUseCase --> UserRepository : asociación
+GetDependenciesUseCase --> DependencyRepository : asociación
+
+' Bridge: UserRepository es la ABSTRACCIÓN; UserHttpRepository la IMPLEMENTACIÓN.
+' Las implementaciones concretas extienden la abstracción (jerarquía separada).
+UserRepository <|-- UserHttpRepository : implementación (Bridge)
+DependencyRepository <|-- DependencyHttpRepository : implementación (Bridge)
+
+' Adapter: el mapper concreto extiende Mapper y traduce Entity -> User.
+Mapper <|-- UserResponseMapper : herencia
+UserResponseMapper ..> UserEntity : dependencia
+UserResponseMapper ..> User : dependencia
+
+' Builder: el repo lo usa para construir el request body.
+UserHttpRepository ..> UserRequestBuilder : usa (Builder)
+UserRequestBuilder ..> UserRequestBody : crea
+
+' El repo concreto usa el backend simulado y el mapper:
+UserHttpRepository ..> Backend : llama (simula HTTP)
+UserHttpRepository ..> UserResponseMapper : usa (Adapter)
+Backend ..> SuccessResponse : responde
+Backend o-- UserEntity : estado del servidor
+
+' Factory Method (DI): DATA_PROVIDERS crea los casos de uso y enlaza repos.
+DATA_PROVIDERS ..> ListUsersUseCase : useFactory
+DATA_PROVIDERS ..> UserHttpRepository : useClass
+DATA_PROVIDERS ..> DependencyHttpRepository : useClass
+
+' Presentación: depende de los casos de uso (no de los repos ni del mock).
+UserListComponent --> ListUsersUseCase : asociación
+UserListComponent --> ChangeUserStatusUseCase : asociación
+UserListComponent ..> COLUMN_RENDERERS : usa (Dispatch table)
+UserFormComponent --> CreateUserUseCase : asociación
+UserFormComponent --> UpdateUserUseCase : asociación
+UserFormComponent --> GetUserByIdUseCase : asociación
+UserFormComponent --> GetDependenciesUseCase : asociación
+
+@enduml

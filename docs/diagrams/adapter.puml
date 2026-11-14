@@ -1,0 +1,45 @@
+@startuml adapter
+title Patrón Adapter - Mapper Entity (backend) -> Model (UI)
+
+' Contrato base del adaptador (mapea de I a O).
+abstract class "Mapper<I,O>" as Mapper {
+    # mapFrom(param: I): O
+    # mapTo?(param: O): I
+}
+
+' Adaptador concreto: traduce la entidad del backend al modelo de la UI.
+class UserResponseMapper {
+    + mapFrom(entityWithCatalog): User
+    + mapList(entities, deps): User[]
+}
+
+' El "adaptee": forma cruda que entrega el backend.
+class UserEntity {
+    + firstName: string
+    + lastName: string
+    + dependencyId: number
+    + status: string
+}
+
+' El objetivo: forma que la UI espera.
+class User {
+    + fullName: string
+    + dependency: Dependency
+    + status: UserStatus
+}
+
+' El cliente que usa el adaptador.
+class UserHttpRepository
+
+Mapper <|-- UserResponseMapper : herencia
+UserResponseMapper ..> UserEntity : adapta (entrada)
+UserResponseMapper ..> User : produce (salida)
+UserHttpRepository --> UserResponseMapper : usa
+
+note bottom of UserResponseMapper
+  Arma fullName = firstName + lastName
+  y resuelve dependencyId -> objeto Dependency.
+  Aísla a la UI del shape del backend.
+end note
+
+@enduml

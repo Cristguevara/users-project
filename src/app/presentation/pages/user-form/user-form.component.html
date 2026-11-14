@@ -1,0 +1,125 @@
+<section class="card">
+  <div class="section-header">
+    <h2>{{ pageTitle }}</h2>
+    <p-button
+      label="Volver"
+      icon="pi pi-arrow-left"
+      severity="secondary"
+      [text]="true"
+      (onClick)="cancel()"
+    />
+  </div>
+
+  @if (loading()) {
+    <p class="loading-hint">Cargando información del usuario...</p>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <div class="form-grid">
+      <div class="form-field">
+        <label for="firstName">Nombre</label>
+        <input
+          id="firstName"
+          type="text"
+          pInputText
+          class="full-width"
+          formControlName="firstName"
+          placeholder="Ej: Ana"
+        />
+        @if (hasError('firstName', 'required')) {
+          <small class="error">El nombre es obligatorio.</small>
+        }
+        @if (hasError('firstName', 'minlength')) {
+          <small class="error">Mínimo 2 caracteres.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="lastName">Apellido</label>
+        <input
+          id="lastName"
+          type="text"
+          pInputText
+          class="full-width"
+          formControlName="lastName"
+          placeholder="Ej: Ramírez"
+        />
+        @if (hasError('lastName', 'required')) {
+          <small class="error">El apellido es obligatorio.</small>
+        }
+        @if (hasError('lastName', 'minlength')) {
+          <small class="error">Mínimo 2 caracteres.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="phone">Teléfono</label>
+        <input
+          id="phone"
+          type="text"
+          pInputText
+          class="full-width"
+          formControlName="phone"
+          placeholder="Ej: 3001112233"
+        />
+        @if (hasError('phone', 'required')) {
+          <small class="error">El teléfono es obligatorio.</small>
+        }
+        @if (hasError('phone', 'pattern')) {
+          <small class="error">Ingresa entre 7 y 15 dígitos.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="email">Correo</label>
+        <input
+          id="email"
+          type="email"
+          pInputText
+          class="full-width"
+          formControlName="email"
+          placeholder="Ej: ana.ramirez@empresa.com"
+        />
+        @if (hasError('email', 'required')) {
+          <small class="error">El correo es obligatorio.</small>
+        }
+        @if (hasError('email', 'email')) {
+          <small class="error">Ingresa un correo válido.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="dependency">Dependencia</label>
+        <p-select
+          inputId="dependency"
+          class="full-width"
+          formControlName="dependencyId"
+          [options]="dependencies()"
+          optionLabel="name"
+          optionValue="id"
+          placeholder="Selecciona una dependencia"
+          appendTo="body"
+        />
+        @if (hasError('dependencyId', 'required')) {
+          <small class="error">Selecciona una dependencia.</small>
+        }
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        type="button"
+        (onClick)="cancel()"
+      />
+      <p-button
+        label="Guardar"
+        icon="pi pi-check"
+        type="submit"
+        [loading]="saving()"
+      />
+    </div>
+  </form>
+</section>

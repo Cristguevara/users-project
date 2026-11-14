@@ -1,0 +1,52 @@
+@startuml command
+title Patrón Command - Casos de uso (cada operación es un objeto con execute())
+
+' Interfaz común de todos los comandos/casos de uso.
+interface "UseCase<S,T>" as UseCase {
+    + execute(params: S): Observable<T>
+}
+
+' Comandos concretos: una operación de negocio cada uno.
+class ListUsersUseCase {
+    - repo: UserRepository
+    + execute(filter): Observable<User[]>
+}
+class GetUserByIdUseCase {
+    - repo: UserRepository
+    + execute(id): Observable<User?>
+}
+class CreateUserUseCase {
+    - repo: UserRepository
+    + execute(data): Observable<User>
+}
+class UpdateUserUseCase {
+    - repo: UserRepository
+    + execute(params): Observable<User>
+}
+class ChangeUserStatusUseCase {
+    - repo: UserRepository
+    + execute(params): Observable<User>
+}
+
+' El receptor sobre el que actúan los comandos.
+abstract class UserRepository
+
+' El invocador dispara el comando sin conocer su implementación.
+class UserListComponent {
+    - listUsers: ListUsersUseCase
+    - changeUserStatus: ChangeUserStatusUseCase
+}
+
+UseCase <|.. ListUsersUseCase : realización
+UseCase <|.. GetUserByIdUseCase : realización
+UseCase <|.. CreateUserUseCase : realización
+UseCase <|.. UpdateUserUseCase : realización
+UseCase <|.. ChangeUserStatusUseCase : realización
+
+ListUsersUseCase --> UserRepository : delega
+ChangeUserStatusUseCase --> UserRepository : delega
+
+UserListComponent --> ListUsersUseCase : invoca execute()
+UserListComponent --> ChangeUserStatusUseCase : invoca execute()
+
+@enduml

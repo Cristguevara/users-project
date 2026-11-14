@@ -1,0 +1,41 @@
+@startuml cambio-de-estado-secuencia
+title Flujo "Inactivar/Activar" y re-consulta del listado
+
+actor Usuario
+participant "UserListComponent\n(presentación)" as List
+participant "ChangeUserStatusUseCase\n(Command)" as Cmd
+participant "UserRepository\n(abstracción)" as Repo
+participant "UserHttpRepository\n(implementación)" as Impl
+participant "UserRequestBuilder\n(Builder)" as Builder
+participant "user-backend.mock\n(servidor simulado)" as Backend
+participant "UserResponseMapper\n(Adapter)" as Mapper
+
+Usuario -> List : clic en "Inactivar"
+List -> Cmd : execute({ id, status: Inactivo })
+note right of Cmd : la vista dispara una acción de negocio\nsin conocer la infraestructura (Command + DIP)
+Cmd -> Repo : changeStatus(id, Inactivo)
+note right of Repo : Bridge: la abstracción delega en\nla implementación enchufada por DI
+Repo -> Impl : (Angular inyecta la implementación via Factory/useClass)
+Impl -> Builder : withStatus(Inactivo).build()
+Builder --> Impl : UserRequestBody { status }
+Impl -> Backend : updateUser(id, body)
+Backend -> Backend : delay (simula latencia de red)
+Backend --> Impl : SuccessResponse<UserEntity>
+Impl -> Mapper : mapFrom(entity, deps)
+Mapper --> Impl : User (modelo de UI)
+Impl --> Cmd : User actualizado
+Cmd --> List : User actualizado
+
+List -> Cmd : (onNext) vuelve a listar
+List -> Repo : ListUsersUseCase.execute({ search })
+Repo -> Impl : list(filter)
+Impl -> Builder : withSearch(term).build()
+Builder --> Impl : UserRequestBody { search }
+Impl -> Backend : fetchUsers(query)
+Backend --> Impl : SuccessResponse<UserEntity[]>
+Impl -> Mapper : mapList(entities, deps)
+Mapper --> Impl : User[]
+Impl --> List : User[]
+List --> Usuario : tabla refrescada con el nuevo estado
+
+@enduml

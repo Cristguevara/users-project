@@ -1,0 +1,53 @@
+@startuml bridge
+title Patrón Bridge - Repositorio de usuarios (abstracción / implementación)
+
+' La ABSTRACCIÓN define QUÉ operaciones existen.
+abstract class UserRepository {
+    + list(filter): Observable<User[]>
+    + getById(id): Observable<User?>
+    + create(data): Observable<User>
+    + update(id, data): Observable<User>
+    + changeStatus(id, status): Observable<User>
+}
+abstract class DependencyRepository {
+    + getAll(): Observable<Dependency[]>
+}
+
+' La IMPLEMENTACIÓN concreta resuelve el CÓMO / el origen de los datos.
+class UserHttpRepository {
+    + list(filter)
+    + getById(id)
+    + create(data)
+    + update(id, data)
+    + changeStatus(id, status)
+}
+class DependencyHttpRepository {
+    + getAll()
+}
+
+' Posibles implementaciones hermanas (misma abstracción, otro origen):
+class UserGraphqlRepository
+class UserIndexedDbRepository
+
+' El consumidor sostiene la abstracción; la implementación se enchufa por DI.
+class ListUsersUseCase {
+    - repo: UserRepository
+    + execute(filter)
+}
+
+UserRepository <|-- UserHttpRepository
+UserRepository <|-- UserGraphqlRepository
+UserRepository <|-- UserIndexedDbRepository
+DependencyRepository <|-- DependencyHttpRepository
+
+ListUsersUseCase --> UserRepository : usa la abstracción\n(el "puente")
+
+note bottom of UserRepository
+  Dos jerarquías independientes:
+  operación de negocio (abstracción)
+  vs. origen de datos (implementación).
+  Evita la explosión de clases
+  UserHttp / UserMongo / UserSql...
+end note
+
+@enduml

@@ -1,0 +1,40 @@
+@startuml factory-method
+title Patrón Factory Method - Creación de casos de uso vía DI (useFactory)
+
+' La "fábrica": funciones que CREAN los casos de uso inyectándoles su repositorio.
+class DataProviders <<factory>> {
+    + listUsersFactory(repo): ListUsersUseCase
+    + createUserFactory(repo): CreateUserUseCase
+    + changeUserStatusFactory(repo): ChangeUserStatusUseCase
+    + getDependenciesFactory(repo): GetDependenciesUseCase
+}
+
+' Productos que fabrica cada factory.
+class ListUsersUseCase
+class CreateUserUseCase
+class ChangeUserStatusUseCase
+class GetDependenciesUseCase
+
+' Dependencias que la factory resuelve (abstracciones) e inyecta al producto.
+abstract class UserRepository
+abstract class DependencyRepository
+
+DataProviders ..> ListUsersUseCase : crea (new)
+DataProviders ..> CreateUserUseCase : crea (new)
+DataProviders ..> ChangeUserStatusUseCase : crea (new)
+DataProviders ..> GetDependenciesUseCase : crea (new)
+
+DataProviders ..> UserRepository : resuelve dependencia
+DataProviders ..> DependencyRepository : resuelve dependencia
+
+ListUsersUseCase --> UserRepository : recibe por constructor
+GetDependenciesUseCase --> DependencyRepository : recibe por constructor
+
+note bottom of DataProviders
+  Cada provider:
+  const xFactory = (repo) => new X(repo);
+  { provide: X, useFactory: xFactory, deps: [Repo] }
+  El cliente pide X y Angular ejecuta la factory.
+end note
+
+@enduml
